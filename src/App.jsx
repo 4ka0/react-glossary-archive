@@ -1,31 +1,34 @@
 import { useState } from 'react';
-
-
-const initialEntries = [
-  { id: 1, sourceText: '情報', targetText: 'information' },
-  { id: 2, sourceText: '装置', targetText: 'device, apparatus' },
-  { id: 3, sourceText: '発明', targetText: 'invention' },
-];
+import { v4 as uuidv4 } from 'uuid';
 
 
 export default function Glossary() {
 
-  const [entries, setEntries] = useState(initialEntries);
-  // const [entries, setEntries] = useState([]);
+  const [entries, setEntries] = useState([]);
+  const [sourceText, setSourceText] = useState("");
+  const [targetText, setTargetText] = useState("");
+
+  function handleEntryInput(e) {
+    if (e.target.name == "sourceText") {
+      setSourceText(e.target.value);
+    } else {
+      setTargetText(e.target.value);
+    }
+  }
 
   function handleAddEntry(e) {
     e.preventDefault();
-    const id = entries.length + 1;
-    const sourceText = e.target.sourceText.value;
-    const targetText = e.target.targetText.value;
+    const newID = uuidv4();
     const newEntry = {
-      id: id,
-      sourceText: sourceText,
-      targetText: targetText,
+      id: newID,
+      sourceText: e.target.sourceText.value,
+      targetText: e.target.targetText.value,
     };
-    const currentEntries = entries.slice();
-    const updatedEntries = currentEntries.concat(newEntry);
+    const updatedEntries = entries.slice();
+    updatedEntries.push(newEntry);
     setEntries(updatedEntries);
+    setSourceText("");
+    setTargetText("");
   }
 
   function handleChangeEntry(e, updatedEntry) {
@@ -42,15 +45,18 @@ export default function Glossary() {
     setEntries(updatedEntries);
   }
 
-  function handleDeleteEntry(entryId) {
-    let updatedEntries = entries.filter(entry => entry.id !== entryId);
+  function handleDeleteEntry(entryID) {
+    let updatedEntries = entries.filter(entry => entry.id !== entryID);
     setEntries(updatedEntries);
   }
 
   return (
     <>
       <AddEntry
+        sourceText={sourceText}
+        targetText={targetText}
         onAddEntry={handleAddEntry}
+        onEntryInput={handleEntryInput}
       />
       <EntryList
         entries={entries}
@@ -62,39 +68,28 @@ export default function Glossary() {
 }
 
 
-function AddEntry({ onAddEntry }) {
-
-  const [sourceText, setSourceText] = useState("");
-  const [targetText, setTargetText] = useState("");
-
+function AddEntry({ sourceText, targetText, onAddEntry, onEntryInput }) {
   return (
-
     <form onSubmit={onAddEntry} >
-
       <input
         type="text"
         id="sourceText"
         name="sourceText"
         value={sourceText}
         placeholder="Source text"
-        onChange={e => setSourceText(e.target.value)}
+        onChange={onEntryInput}
       />
-
       &nbsp;
-
       <input
         type="text"
         id="targetText"
         name="targetText"
         value={targetText}
         placeholder="Target text"
-        onChange={e => setTargetText(e.target.value)}
+        onChange={onEntryInput}
       />
-
       &nbsp;
-
       <button type="submit">Submit</button>
-
     </form>
   )
 }
@@ -122,7 +117,7 @@ function Entry({ entry, onChange, onDelete }) {
   const [isEditing, setIsEditing] = useState(false);
   let entryContent;
 
-  // Alter the displayed content depending on whether the entry is being edited.
+  // The displayed content changes depending on whether the entry is being edited.
   // If the entry is currently being edited.
   if (isEditing) {
     entryContent = (
@@ -135,6 +130,7 @@ function Entry({ entry, onChange, onDelete }) {
               e => {onChange({ ...entry, sourceText: e.target.value });
             }}
           />
+          &nbsp;
           <input
             value={entry.targetText}
             onChange={
