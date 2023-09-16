@@ -8,14 +8,6 @@ export default function Glossary() {
   const [sourceText, setSourceText] = useState("");
   const [targetText, setTargetText] = useState("");
 
-  function handleEntryInput(e) {
-    if (e.target.name == "sourceText") {
-      setSourceText(e.target.value);
-    } else {
-      setTargetText(e.target.value);
-    }
-  }
-
   function handleAddEntry(e) {
     e.preventDefault();
     const newID = uuidv4();
@@ -31,12 +23,38 @@ export default function Glossary() {
     setTargetText("");
   }
 
+  function handleAddEntryInput(e) {
+    if (e.target.name == "sourceText") {
+      setSourceText(e.target.value);
+    } else {
+      setTargetText(e.target.value);
+    }
+  }
+
   function handleChangeEntry(e, updatedEntry) {
     e.preventDefault();
     let updatedEntries = entries.map(
       entry => {
         if (entry.id === updatedEntry.id) {
           return updatedEntry;
+        } else {
+          return entry;
+        }
+      }
+    );
+    setEntries(updatedEntries);
+  }
+
+  function handleChangeEntryInput(targetEntry, newValue, targetName) {
+    let updatedEntries = entries.map(
+      entry => {
+        if (entry.id === targetEntry.id) {
+          if (targetName == "sourceText") {
+            targetEntry.sourceText = newValue;
+          } else {
+            targetEntry.targetText = newValue;
+          }
+          return targetEntry;
         } else {
           return entry;
         }
@@ -56,11 +74,12 @@ export default function Glossary() {
         sourceText={sourceText}
         targetText={targetText}
         onAddEntry={handleAddEntry}
-        onEntryInput={handleEntryInput}
+        onAddEntryInput={handleAddEntryInput}
       />
       <EntryList
         entries={entries}
         onChangeEntry={handleChangeEntry}
+        onChangeEntryInput={handleChangeEntryInput}
         onDeleteEntry={handleDeleteEntry}
       />
     </>
@@ -68,7 +87,7 @@ export default function Glossary() {
 }
 
 
-function AddEntry({ sourceText, targetText, onAddEntry, onEntryInput }) {
+function AddEntry({ sourceText, targetText, onAddEntry, onAddEntryInput }) {
   return (
     <form onSubmit={onAddEntry} >
       <input
@@ -77,25 +96,27 @@ function AddEntry({ sourceText, targetText, onAddEntry, onEntryInput }) {
         name="sourceText"
         value={sourceText}
         placeholder="Source text"
-        onChange={onEntryInput}
+        onChange={onAddEntryInput}
+        required
       />
-      &nbsp;
+      &nbsp;&nbsp;
       <input
         type="text"
         id="targetText"
         name="targetText"
         value={targetText}
         placeholder="Target text"
-        onChange={onEntryInput}
+        onChange={onAddEntryInput}
+        required
       />
-      &nbsp;
+      &nbsp;&nbsp;
       <button type="submit">Submit</button>
     </form>
   )
 }
 
 
-function EntryList({ entries, onChangeEntry, onDeleteEntry }) {
+function EntryList({ entries, onChangeEntry, onChangeEntryInput, onDeleteEntry }) {
   return (
     <ul>
       {entries.map(entry => (
@@ -103,6 +124,7 @@ function EntryList({ entries, onChangeEntry, onDeleteEntry }) {
           <Entry
             entry={entry}
             onChange={onChangeEntry}
+            onChangeInput={onChangeEntryInput}
             onDelete={onDeleteEntry}
           />
         </li>
@@ -112,44 +134,47 @@ function EntryList({ entries, onChangeEntry, onDeleteEntry }) {
 }
 
 
-function Entry({ entry, onChange, onDelete }) {
+function Entry({ entry, onChange, onChangeInput, onDelete }) {
 
   const [isEditing, setIsEditing] = useState(false);
   let entryContent;
 
-  // The displayed content changes depending on whether the entry is being edited.
-  // If the entry is currently being edited.
   if (isEditing) {
     entryContent = (
       <>
-        <form onSubmit={() => { setIsEditing(false); onChange; }} >
-
+        <form
+          style={{display: "inline"}}
+          onSubmit={() => { setIsEditing(false); onChange; }}
+        >
           <input
+            type="text"
+            id="sourceText"
+            name="sourceText"
             value={entry.sourceText}
-            onChange={
-              e => {onChange({ ...entry, sourceText: e.target.value });
-            }}
+            onChange={(e) => onChangeInput(entry, e.target.value, e.target.name)}
+            required
           />
-          &nbsp;
+          &nbsp;&nbsp;
           <input
+            type="text"
+            id="targetText"
+            name="targetText"
             value={entry.targetText}
-            onChange={
-              e => {onChange({ ...entry, targetText: e.target.value });
-            }}
+            onChange={(e) => onChangeInput(entry, e.target.value, e.target.name)}
+            required
           />
-          &nbsp;
+          &nbsp;&nbsp;
           <button type="submit" >Save</button>
         </form>
       </>
     );
-  // If the entry is not being edited.
   } else {
     entryContent = (
       <>
         {entry.sourceText}
-        &nbsp;
+        &nbsp;&nbsp;
         {entry.targetText}
-        &nbsp;
+        &nbsp;&nbsp;
         <button onClick={() => setIsEditing(true)}>
           Edit
         </button>
@@ -160,7 +185,7 @@ function Entry({ entry, onChange, onDelete }) {
   return (
     <label>
       {entryContent}
-      &nbsp;
+      &nbsp;&nbsp;
       <button onClick={() => onDelete(entry.id)}>
         Delete
       </button>
