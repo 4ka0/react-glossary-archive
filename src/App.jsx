@@ -120,7 +120,10 @@ function EntryList({ entries, onChangeEntry, onChangeEntryInput, onDeleteEntry }
   return (
     <ul>
       {entries.map(entry => (
-        <li key={entry.id}>
+        <li
+          style={{"padding-top": "6px"}}
+          key={entry.id}
+        >
           <Entry
             entry={entry}
             onChange={onChangeEntry}
