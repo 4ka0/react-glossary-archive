@@ -1,1 +1,1 @@
-Simple terminology management app built using React.
+Extremely simple glossary app built using React.
